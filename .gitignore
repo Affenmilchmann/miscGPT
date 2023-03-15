@@ -3,3 +3,5 @@ __pycache__/
 *.swp
 .env
 .pylintrc
+wr.txt
+wr_clean.txt
