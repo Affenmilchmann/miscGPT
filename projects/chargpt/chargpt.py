@@ -4,6 +4,8 @@ Trains a character-level language model.
 
 import os
 import sys
+import logging
+logging.basicConfig(format='%(asctime)s %(message)s', datefmt='[%H:%M:%S]', level=logging.INFO)
 
 import torch
 from torch.utils.data import Dataset
@@ -84,6 +86,7 @@ class CharDataset(Dataset):
 # -----------------------------------------------------------------------------
 
 if __name__ == '__main__':
+    logging.info('starting...')
 
     # get default config and overrides from the command line, if any
     config = get_config()
@@ -93,7 +96,7 @@ if __name__ == '__main__':
     set_seed(config.system.seed)
 
     # construct the training dataset
-    text = open('input.txt', 'r').read() # don't worry we won't run out of file handles
+    text = open('womanru.txt', 'r').read() # don't worry we won't run out of file handles
     train_dataset = CharDataset(config.data, text)
 
     # construct the model
@@ -107,15 +110,15 @@ if __name__ == '__main__':
     # iteration callback
     def batch_end_callback(trainer):
 
-        if trainer.iter_num % 10 == 0:
-            print(f"iter_dt {trainer.iter_dt * 1000:.2f}ms; iter {trainer.iter_num}: train loss {trainer.loss.item():.5f}")
+        if trainer.iter_num % 100 == 0:
+            logging.info(f"iter_dt {trainer.iter_dt * 1:.2f}s; iter {trainer.iter_num}: train loss {trainer.loss.item():.5f}")
 
         if trainer.iter_num % 500 == 0:
             # evaluate both the train and test score
             model.eval()
             with torch.no_grad():
                 # sample from the model...
-                context = "O God, O God!"
+                context = "[new]\n"
                 x = torch.tensor([train_dataset.stoi[s] for s in context], dtype=torch.long)[None,...].to(trainer.device)
                 y = model.generate(x, 500, temperature=1.0, do_sample=True, top_k=10)[0]
                 completion = ''.join([train_dataset.itos[int(i)] for i in y])
